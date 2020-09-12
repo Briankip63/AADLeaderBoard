@@ -1,0 +1,86 @@
+package com.Brian.leaderboard
+
+import android.os.Bundle
+import androidx.fragment.app.Fragment
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.Brian.leaderboard.ApiServices
+import com.Brian.leaderboard.SkillIQLearnersResponse
+import com.Brian.leaderboard.R
+import com.Brian.leaderboard.getRetrofit
+import com.Brian.leaderboard.SkillIQLeadersEntity
+import com.Brian.leaderboard.SkillIQLeadersAdapter
+import kotlinx.android.synthetic.main.fragment_skill_i_q.*
+import kotlinx.android.synthetic.main.skilliq_items.*
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+
+
+/**
+ * A simple [Fragment] subclass.
+ * Use the [SkillIQFragment.newInstance] factory method to
+ * create an instance of this fragment.
+ */
+class SkillIQFragment : Fragment() {
+
+    lateinit var recyclerView: RecyclerView
+    private var skillIQLeadersAdapter = SkillIQLeadersAdapter()
+    private var allSkillIq: List<SkillIQLeadersEntity>? = null
+    lateinit var layoutManager: LinearLayoutManager
+
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        // Inflate the layout for this fragment
+        return inflater.inflate(R.layout.fragment_skill_i_q, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        recyclerView = view.findViewById(R.id.skillIqRecycler)
+        recyclerView.adapter = skillIQLeadersAdapter
+        layoutManager = LinearLayoutManager(view.context)
+        recyclerView.layoutManager = layoutManager
+
+        val service = getRetrofit.create(ApiServices::class.java)
+        val call = service.getSkillIqLeaders()
+
+        skillProgressBar.visibility = View.VISIBLE
+        skill_iq_empty_text.visibility = View.VISIBLE
+
+        call.enqueue(object : Callback<List<SkillIQLearnersResponse>> {
+            override fun onResponse(call: Call<List<SkillIQLearnersResponse>>, response: Response<List<SkillIQLearnersResponse>>) {
+                if (response.code() == 200) {
+                    val skillIq = response.body()!!
+                    skillProgressBar.visibility = View.GONE
+                    skill_iq_empty_text.visibility = View.GONE
+                    skillIQLeadersAdapter.addItems(response.body()!!)
+
+                }
+
+            }
+
+            override fun onFailure(call: Call<List<SkillIQLearnersResponse>>, t: Throwable) {
+                tvIqName!!.text = t.message
+                tvIqCountry!!.text = t.message
+                tvIqScores!!.text = t.message
+                skillProgressBar.visibility = View.GONE
+                skill_iq_empty_text.visibility = View.VISIBLE
+                //imgIq.setImageResource(R.drawable) = t.message
+            }
+        })
+    }
+}
